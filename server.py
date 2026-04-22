@@ -154,7 +154,7 @@ class Handler(BaseHTTPRequestHandler):
         try:
             conn = sqlite3.connect(DB_PATH)
             rows = conn.execute('''
-                SELECT v.title, s.video_id, s.start_secs
+                SELECT v.title, s.video_id, s.start_secs, v.indexed_at
                 FROM segments s
                 JOIN videos v ON v.id = s.video_id
                 WHERE segments MATCH ?
@@ -167,9 +167,10 @@ class Handler(BaseHTTPRequestHandler):
                     'title': title,
                     'videoId': vid_id,
                     'startSecs': start,
+                    'savedAt': indexed_at,
                     'url': f'https://youtube.com/watch?v={vid_id}&t={start}'
                 }
-                for title, vid_id, start in rows
+                for title, vid_id, start, indexed_at in rows
             ]
             self._reply(200, {'results': results})
         except Exception as e:

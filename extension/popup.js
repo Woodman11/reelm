@@ -36,9 +36,12 @@ async function doSearch() {
       a.className = 'result';
       a.href = r.url;
       a.target = '_blank';
+      const date = r.savedAt
+        ? new Date(r.savedAt * 1000).toLocaleDateString(undefined, {year:'numeric',month:'short',day:'numeric'})
+        : '';
       a.innerHTML = `
         <div class="result-title">${r.title}</div>
-        <div class="result-time">@ ${fmtTime(r.startSecs)}</div>
+        <div class="result-time">@ ${fmtTime(r.startSecs)}<span class="result-date">${date}</span></div>
       `;
       results.appendChild(a);
     }

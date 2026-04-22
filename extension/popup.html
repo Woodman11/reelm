@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    width: 360px;
+    background: #0f0f0f;
+    color: #eee;
+    font: 13px/1.4 "Segoe UI", Roboto, sans-serif;
+  }
+  #header {
+    padding: 10px 12px 8px;
+    font-size: 12px;
+    color: #aaa;
+    border-bottom: 1px solid #222;
+    letter-spacing: .3px;
+  }
+  #search-row {
+    display: flex;
+    gap: 6px;
+    padding: 10px 10px 6px;
+  }
+  #q {
+    flex: 1;
+    background: #222;
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #eee;
+    font-size: 13px;
+    padding: 6px 9px;
+    outline: none;
+  }
+  #q:focus { border-color: #f00; }
+  #btn {
+    background: #f00;
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 6px 12px;
+  }
+  #btn:hover { background: #c00; }
+  #status {
+    padding: 0 12px 6px;
+    font-size: 11px;
+    color: #888;
+    min-height: 18px;
+  }
+  #results { max-height: 380px; overflow-y: auto; }
+  .result {
+    display: block;
+    padding: 8px 12px;
+    border-top: 1px solid #1e1e1e;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+  }
+  .result:hover { background: #1a1a1a; }
+  .result-title {
+    font-size: 12px;
+    color: #eee;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .result-time {
+    font-size: 11px;
+    color: #f00;
+    margin-top: 2px;
+  }
+</style>
+</head>
+<body>
+<div id="header">YouTube Save for Search</div>
+<div id="search-row">
+  <input id="q" type="text" placeholder="Search saved videos…" autofocus>
+  <button id="btn">Search</button>
+</div>
+<div id="status"></div>
+<div id="results"></div>
+<script src="popup.js"></script>
+</body>
+</html>

@@ -132,13 +132,48 @@ class Handler(BaseHTTPRequestHandler):
 
     def _cors(self):
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
 
     def do_OPTIONS(self):
         self.send_response(204)
         self._cors()
         self.end_headers()
+
+    def do_GET(self):
+        from urllib.parse import urlparse, parse_qs
+        parsed = urlparse(self.path)
+        if parsed.path != '/search':
+            self.send_response(404)
+            self.end_headers()
+            return
+        q = parse_qs(parsed.query).get('q', [''])[0].strip()
+        if not q:
+            self._reply(400, {'results': [], 'error': 'Missing query'})
+            return
+        try:
+            conn = sqlite3.connect(DB_PATH)
+            rows = conn.execute('''
+                SELECT v.title, s.video_id, s.start_secs
+                FROM segments s
+                JOIN videos v ON v.id = s.video_id
+                WHERE segments MATCH ?
+                ORDER BY rank
+                LIMIT 25
+            ''', (q,)).fetchall()
+            conn.close()
+            results = [
+                {
+                    'title': title,
+                    'videoId': vid_id,
+                    'startSecs': start,
+                    'url': f'https://youtube.com/watch?v={vid_id}&t={start}'
+                }
+                for title, vid_id, start in rows
+            ]
+            self._reply(200, {'results': results})
+        except Exception as e:
+            self._reply(500, {'results': [], 'error': str(e)})
 
     def do_POST(self):
         if self.path != '/save':

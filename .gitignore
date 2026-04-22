@@ -1,0 +1,5 @@
+venv/
+videos.db
+*.log
+__pycache__/
+*.pyc

@@ -5,20 +5,16 @@ Receives save requests from the Chrome extension,
 fetches transcripts, and indexes them in SQLite FTS5.
 """
 
+import glob
 import json
 import os
+import shutil
 import sqlite3
+import subprocess
 import sys
+import tempfile
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
-
-try:
-    from youtube_transcript_api import YouTubeTranscriptApi
-    HAS_TRANSCRIPT_API = True
-except ImportError:
-    HAS_TRANSCRIPT_API = False
-    print("WARNING: youtube-transcript-api not installed.")
-    print("Run: pip3 install youtube-transcript-api")
 
 if getattr(sys, 'frozen', False):
     _data_dir = os.path.expanduser('~/Library/Application Support/MyYouTubeSearch')
@@ -64,15 +60,48 @@ def _write_segments(video_id, segments):
     conn.close()
 
 
+def _fetch_segments(video_id):
+    ytdlp = shutil.which('yt-dlp') or '/opt/homebrew/bin/yt-dlp'
+    with tempfile.TemporaryDirectory() as tmpdir:
+        subprocess.run(
+            [
+                ytdlp,
+                '--cookies-from-browser', 'chrome',
+                '--write-auto-subs',
+                '--sub-lang', 'en',
+                '--sub-format', 'json3',
+                '--skip-download',
+                '--no-playlist',
+                '-q',
+                '-o', os.path.join(tmpdir, '%(id)s'),
+                f'https://www.youtube.com/watch?v={video_id}',
+            ],
+            capture_output=True, timeout=60
+        )
+        files = glob.glob(os.path.join(tmpdir, f'{video_id}.*.json3'))
+        if not files:
+            return None
+        with open(files[0]) as f:
+            data = json.load(f)
+    segments = []
+    for event in data.get('events', []):
+        if 'segs' not in event:
+            continue
+        start = event.get('tStartMs', 0) / 1000
+        text = ''.join(s.get('utf8', '') for s in event['segs']).strip()
+        if text and text != '\n':
+            segments.append((start, text))
+    return segments or None
+
+
 def fetch_and_index(video_id, title, save_ts_secs):
-    if not HAS_TRANSCRIPT_API:
-        return
     try:
-        api = YouTubeTranscriptApi()
-        transcript = api.fetch(video_id)
-        segments = [(seg.start, seg.text) for seg in transcript]
-        _write_segments(video_id, segments)
-        print(f"Indexed {len(segments)} segments: {title}")
+        segments = _fetch_segments(video_id)
+        if segments:
+            _write_segments(video_id, segments)
+            print(f"Indexed {len(segments)} segments: {title}")
+        else:
+            print(f"No transcript for {video_id}: {title}")
     except Exception as e:
         print(f"Transcript unavailable for {video_id}: {e}")
 
@@ -157,6 +186,9 @@ class Handler(BaseHTTPRequestHandler):
         ).fetchone()
         conn.close()
 
+        segments_from_ext = data.get('segments')
+        ext_sent_segments = 'segments' in data
+
         if exists:
             mins, secs = divmod(save_ts_secs, 60)
             msg = f'Already saved — {title}'
@@ -168,11 +200,22 @@ class Handler(BaseHTTPRequestHandler):
             )
             conn.commit()
             conn.close()
-            threading.Thread(
-                target=fetch_and_index,
-                args=(video_id, title, save_ts_secs),
-                daemon=True
-            ).start()
+
+            if ext_sent_segments:
+                if segments_from_ext:
+                    pairs = [(s['start'], s['text']) for s in segments_from_ext if s.get('text')]
+                    _write_segments(video_id, pairs)
+                    print(f"Indexed {len(pairs)} segments (browser): {title}")
+                else:
+                    print(f"No transcript available: {title}")
+            else:
+                # Legacy path: old extension didn't send segments, fall back to yt-dlp
+                threading.Thread(
+                    target=fetch_and_index,
+                    args=(video_id, title, save_ts_secs),
+                    daemon=True
+                ).start()
+
             mins, secs = divmod(save_ts_secs, 60)
             msg = f'Saved @ {mins}:{secs:02d} — {title}'
 

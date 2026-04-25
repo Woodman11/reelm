@@ -4,16 +4,15 @@ DB maintenance: retry failed transcripts, optimize FTS5 index, vacuum.
 Safe to run while server.py is also running.
 """
 
+import glob
 import os
+import shutil
 import sqlite3
+import subprocess
 import sys
+import tempfile
+import json
 from datetime import datetime
-
-try:
-    from youtube_transcript_api import YouTubeTranscriptApi
-    HAS_TRANSCRIPT_API = True
-except ImportError:
-    HAS_TRANSCRIPT_API = False
 
 if getattr(sys, 'frozen', False):
     _data_dir = os.path.expanduser('~/Library/Application Support/MyYouTubeSearch')
@@ -31,11 +30,41 @@ def log(msg):
         f.write(line + '\n')
 
 
-def retry_missing_transcripts(conn):
-    if not HAS_TRANSCRIPT_API:
-        log("SKIP retry — youtube-transcript-api not installed")
-        return
+def _fetch_segments(video_id):
+    ytdlp = shutil.which('yt-dlp') or '/opt/homebrew/bin/yt-dlp'
+    with tempfile.TemporaryDirectory() as tmpdir:
+        subprocess.run(
+            [
+                ytdlp,
+                '--cookies-from-browser', 'chrome',
+                '--write-auto-subs',
+                '--sub-lang', 'en',
+                '--sub-format', 'json3',
+                '--skip-download',
+                '--no-playlist',
+                '-q',
+                '-o', os.path.join(tmpdir, '%(id)s'),
+                f'https://www.youtube.com/watch?v={video_id}',
+            ],
+            capture_output=True, timeout=60
+        )
+        files = glob.glob(os.path.join(tmpdir, f'{video_id}.*.json3'))
+        if not files:
+            return None
+        with open(files[0]) as f:
+            data = json.load(f)
+    segments = []
+    for event in data.get('events', []):
+        if 'segs' not in event:
+            continue
+        start = event.get('tStartMs', 0) / 1000
+        text = ''.join(s.get('utf8', '') for s in event['segs']).strip()
+        if text and text != '\n':
+            segments.append((start, text))
+    return segments or None
 
+
+def retry_missing_transcripts(conn):
     rows = conn.execute(
         'SELECT id, title FROM videos WHERE has_transcript=0'
     ).fetchall()
@@ -45,13 +74,14 @@ def retry_missing_transcripts(conn):
         return
 
     log(f"Retry: {len(rows)} video(s) with no transcript")
-    api = YouTubeTranscriptApi()
     retried = 0
 
     for video_id, title in rows:
         try:
-            transcript = api.fetch(video_id)
-            segments = [(seg.start, seg.text) for seg in transcript]
+            segments = _fetch_segments(video_id)
+            if not segments:
+                log(f"  FAIL {video_id} — {title}: no subtitles available")
+                continue
             conn.execute('UPDATE videos SET has_transcript=1 WHERE id=?', (video_id,))
             for start, text in segments:
                 conn.execute(

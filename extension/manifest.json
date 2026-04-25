@@ -1,9 +1,12 @@
 {
   "manifest_version": 3,
   "name": "My YouTube Indexed Search Tool",
-  "version": "1.3",
+  "version": "1.4",
   "description": "Press Shift+Y while watching to save video for keyword search",
   "permissions": [],
+  "background": {
+    "service_worker": "background.js"
+  },
   "host_permissions": ["http://localhost:7799/*", "*://*.youtube.com/*"],
   "icons": {
     "16": "icons/icon16.png",

@@ -18,18 +18,18 @@ document.addEventListener('keydown', (e) => {
   const currentTime = Math.floor(video.currentTime);
   const title = document.title.replace(/ - YouTube$/, '').trim();
 
-  // Save immediately — no waiting on transcript
-  fetch('http://localhost:7799/save', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ videoId, currentTime, title })
-  })
-    .then(r => r.json())
-    .then(data => {
-      showToast(data.message);
-      if (data.new_save) uploadTranscript(videoId);
-    })
-    .catch(() => showToast('Server not running — start server.py', 'error'));
+  // Route through background service worker to avoid Private Network Access block
+  chrome.runtime.sendMessage(
+    {type: 'save', data: {videoId, currentTime, title}},
+    response => {
+      if (response && response.ok) {
+        showToast(response.data.message);
+        if (response.data.new_save) uploadTranscript(videoId);
+      } else {
+        showToast('Server not running — start server.py', 'error');
+      }
+    }
+  );
 }, true);
 
 // Fire-and-forget: fetch transcript from page and upload to server
@@ -49,11 +49,7 @@ async function uploadTranscript(videoId) {
       if (text && text !== '\n') segs.push({ start, text });
     }
     if (!segs.length) return;
-    fetch('http://localhost:7799/transcript', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ videoId, segments: segs })
-    }).catch(() => {});
+    chrome.runtime.sendMessage({type: 'transcript', data: {videoId, segments: segs}});
   } catch {
     // transcript upload is best-effort, ignore all errors
   }

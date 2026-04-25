@@ -22,6 +22,19 @@
     justify-content: space-between;
     align-items: center;
   }
+  #health-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #444;
+    vertical-align: middle;
+    margin-right: 6px;
+    flex-shrink: 0;
+    transition: background .3s;
+  }
+  #health-dot.ok   { background: #2ecc71; }
+  #health-dot.warn { background: #f39c12; }
   #stats {
     font-size: 11px;
     color: #555;
@@ -104,7 +117,7 @@
 </style>
 </head>
 <body>
-<div id="header">My YouTube Indexed Search Tool <span id="stats"></span></div>
+<div id="header"><span><span id="health-dot"></span>My YouTube Indexed Search Tool</span><span id="stats"></span></div>
 <div id="search-row">
   <input id="q" type="text" placeholder="Search saved videos…" autofocus>
   <button id="btn">Search</button>

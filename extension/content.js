@@ -36,9 +36,33 @@ document.addEventListener('keydown', (e) => {
   );
 }, true);
 
-// Fire-and-forget: background fetches the watch page fresh and parses captionTracks
+// Parse captionTracks directly from ytInitialPlayerResponse in the page's script tags.
+// No script injection needed — avoids YouTube's CSP.
+function getCaptionUrl() {
+  for (const script of document.querySelectorAll('script')) {
+    const t = script.textContent;
+    if (!t.includes('"captionTracks"')) continue;
+    try {
+      const idx = t.indexOf('"captionTracks"');
+      const arrStart = t.indexOf('[', idx);
+      let depth = 0, i = arrStart;
+      for (; i < t.length; i++) {
+        if (t[i] === '[') depth++;
+        else if (t[i] === ']') { if (--depth === 0) break; }
+      }
+      const tracks = JSON.parse(t.slice(arrStart, i + 1));
+      const asr = tracks.find(tr => tr.languageCode === 'en' && tr.kind === 'asr');
+      const manual = tracks.find(tr => tr.languageCode === 'en');
+      const track = asr || manual || tracks[0];
+      if (track?.baseUrl) return track.baseUrl;
+    } catch {}
+  }
+  return null;
+}
+
 function uploadTranscript(videoId) {
-  chrome.runtime.sendMessage({type: 'transcript', data: {videoId}});
+  const captionUrl = getCaptionUrl();
+  chrome.runtime.sendMessage({type: 'transcript', data: {videoId, captionUrl}});
 }
 
 function showToast(msg, type = 'ok') {

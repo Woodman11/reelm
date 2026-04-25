@@ -12,11 +12,19 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 
   if (msg.type === 'transcript') {
-    const {videoId} = msg.data;
-    const base = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=en&fmt=json3`;
+    const {videoId, captionUrl} = msg.data;
 
-    const tryUrl = (url) =>
-      fetch(url, {credentials: 'include'})
+    const toJson3 = (url) => {
+      try {
+        const u = new URL(url);
+        u.searchParams.set('fmt', 'json3');
+        return u.toString();
+      } catch { return null; }
+    };
+
+    const tryUrl = (url) => {
+      if (!url) return Promise.resolve(null);
+      return fetch(url, {credentials: 'include'})
         .then(r => r.text())
         .then(text => {
           if (!text || text[0] !== '{') return null;
@@ -31,8 +39,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
           return segs.length ? segs : null;
         })
         .catch(() => null);
+    };
 
-    tryUrl(base + '&kind=asr')
+    const base = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=en&fmt=json3`;
+    const primary = captionUrl ? toJson3(captionUrl) : null;
+
+    tryUrl(primary)
+      .then(segs => segs || tryUrl(base + '&kind=asr'))
       .then(segs => segs || tryUrl(base))
       .then(segs => {
         if (!segs) return;

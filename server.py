@@ -61,7 +61,7 @@ def _write_segments(video_id, segments):
 
 
 def _fetch_segments(video_id):
-    ytdlp = shutil.which('yt-dlp') or '/opt/homebrew/bin/yt-dlp'
+    ytdlp = '/opt/homebrew/bin/yt-dlp'
     with tempfile.TemporaryDirectory() as tmpdir:
         subprocess.run(
             [

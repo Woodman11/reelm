@@ -1,4 +1,4 @@
-document.addEventListener('keydown', async (e) => {
+document.addEventListener('keydown', (e) => {
   // Shift+Y — use capture phase (third arg true) so YouTube's stopPropagation() can't swallow it
   if (e.code !== 'KeyY' || !e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) return;
   const t = e.target;
@@ -18,24 +18,28 @@ document.addEventListener('keydown', async (e) => {
   const currentTime = Math.floor(video.currentTime);
   const title = document.title.replace(/ - YouTube$/, '').trim();
 
-  // Fetch transcript from the page itself — avoids any server-side YouTube requests
-  const segments = await fetchTranscriptFromPage();
-
+  // Save immediately — no waiting on transcript
   fetch('http://localhost:7799/save', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ videoId, currentTime, title, segments })
+    body: JSON.stringify({ videoId, currentTime, title })
   })
     .then(r => r.json())
-    .then(data => showToast(data.message))
+    .then(data => {
+      showToast(data.message);
+      if (data.new_save) uploadTranscript(videoId);
+    })
     .catch(() => showToast('Server not running — start server.py', 'error'));
 }, true);
 
-async function fetchTranscriptFromPage() {
+// Fire-and-forget: fetch transcript from page and upload to server
+async function uploadTranscript(videoId) {
   const baseUrl = getCaptionBaseUrl();
-  if (!baseUrl) return null;
+  if (!baseUrl) return;
   try {
-    const r = await fetch(baseUrl + '&fmt=json3');
+    const ac = new AbortController();
+    setTimeout(() => ac.abort(), 5000);
+    const r = await fetch(baseUrl + '&fmt=json3', { signal: ac.signal });
     const data = await r.json();
     const segs = [];
     for (const ev of (data.events || [])) {
@@ -44,9 +48,14 @@ async function fetchTranscriptFromPage() {
       const text = ev.segs.map(s => s.utf8 || '').join('').trim();
       if (text && text !== '\n') segs.push({ start, text });
     }
-    return segs.length ? segs : null;
+    if (!segs.length) return;
+    fetch('http://localhost:7799/transcript', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ videoId, segments: segs })
+    }).catch(() => {});
   } catch {
-    return null;
+    // transcript upload is best-effort, ignore all errors
   }
 }
 
@@ -68,7 +77,6 @@ function getCaptionBaseUrl() {
 }
 
 function showToast(msg, type = 'ok') {
-  // Remove any existing toast
   document.getElementById('yt-search-toast')?.remove();
 
   const el = document.createElement('div');

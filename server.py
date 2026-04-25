@@ -165,13 +165,30 @@ class Handler(BaseHTTPRequestHandler):
             self._reply(500, {'results': [], 'error': str(e)})
 
     def do_POST(self):
+        length = int(self.headers.get('Content-Length', 0))
+        data = json.loads(self.rfile.read(length))
+
+        if self.path == '/transcript':
+            video_id = data.get('videoId', '').strip()
+            segments = data.get('segments') or []
+            if video_id and segments:
+                conn = sqlite3.connect(DB_PATH)
+                row = conn.execute(
+                    'SELECT has_transcript FROM videos WHERE id=?', (video_id,)
+                ).fetchone()
+                conn.close()
+                if row and not row[0]:
+                    pairs = [(s['start'], s['text']) for s in segments if s.get('text')]
+                    _write_segments(video_id, pairs)
+                    print(f"Transcript from browser: {video_id} ({len(pairs)} segs)")
+            self._reply(200, {'ok': True})
+            return
+
         if self.path != '/save':
             self.send_response(404)
             self.end_headers()
             return
 
-        length = int(self.headers.get('Content-Length', 0))
-        data = json.loads(self.rfile.read(length))
         video_id = data.get('videoId', '').strip()
         title = data.get('title', 'Unknown').strip()
         save_ts_secs = int(data.get('currentTime', 0))
@@ -186,12 +203,10 @@ class Handler(BaseHTTPRequestHandler):
         ).fetchone()
         conn.close()
 
-        segments_from_ext = data.get('segments')
-        ext_sent_segments = 'segments' in data
-
         if exists:
             mins, secs = divmod(save_ts_secs, 60)
             msg = f'Already saved — {title}'
+            new_save = False
         else:
             conn = sqlite3.connect(DB_PATH)
             conn.execute(
@@ -200,16 +215,8 @@ class Handler(BaseHTTPRequestHandler):
             )
             conn.commit()
             conn.close()
-
-            if ext_sent_segments:
-                if segments_from_ext:
-                    pairs = [(s['start'], s['text']) for s in segments_from_ext if s.get('text')]
-                    _write_segments(video_id, pairs)
-                    print(f"Indexed {len(pairs)} segments (browser): {title}")
-                else:
-                    print(f"No transcript available: {title}")
-            else:
-                # Legacy path: old extension didn't send segments, fall back to yt-dlp
+            # Legacy yt-dlp fallback only if old extension (no segments key sent)
+            if 'segments' not in data:
                 threading.Thread(
                     target=fetch_and_index,
                     args=(video_id, title, save_ts_secs),
@@ -218,8 +225,9 @@ class Handler(BaseHTTPRequestHandler):
 
             mins, secs = divmod(save_ts_secs, 60)
             msg = f'Saved @ {mins}:{secs:02d} — {title}'
+            new_save = True
 
-        self._reply(200, {'message': msg})
+        self._reply(200, {'message': msg, 'new_save': new_save})
 
     def _reply(self, code, body):
         payload = json.dumps(body).encode()

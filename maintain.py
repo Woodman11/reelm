@@ -9,18 +9,16 @@ import os
 import shutil
 import sqlite3
 import subprocess
-import sys
 import tempfile
 import json
 from datetime import datetime
 
-if getattr(sys, 'frozen', False):
-    _data_dir = os.path.expanduser('~/Library/Application Support/MyYouTubeSearch')
-    DB_PATH = os.path.join(_data_dir, 'videos.db')
-else:
-    DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'videos.db')
+from paths import DB_PATH
 
 LOG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'maintain.log')
+SERVER_LOG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'server.log')
+LOG_ROTATE_BYTES = 1_000_000  # 1 MB
+LOG_KEEP_TAIL_LINES = 200
 
 
 def log(msg):
@@ -30,10 +28,16 @@ def log(msg):
         f.write(line + '\n')
 
 
+def _resolve_ytdlp():
+    # launchctl's PATH excludes homebrew dirs, so shutil.which alone fails under LaunchAgents.
+    for candidate in (shutil.which('yt-dlp'), '/opt/homebrew/bin/yt-dlp', '/usr/local/bin/yt-dlp'):
+        if candidate and os.path.exists(candidate):
+            return candidate
+    raise RuntimeError("yt-dlp not found — install with `brew install yt-dlp`")
+
+
 def _fetch_segments(video_id):
-    ytdlp = shutil.which('yt-dlp')
-    if not ytdlp:
-        raise RuntimeError("yt-dlp not found on PATH — install with `brew install yt-dlp`")
+    ytdlp = _resolve_ytdlp()
     with tempfile.TemporaryDirectory() as tmpdir:
         subprocess.run(
             [
@@ -109,6 +113,25 @@ def vacuum(conn):
     log("VACUUM: done")
 
 
+def rotate_log(path):
+    try:
+        size = os.path.getsize(path)
+    except FileNotFoundError:
+        return
+    if size < LOG_ROTATE_BYTES:
+        return
+    # Truncate-in-place: launchd opens server.log with O_APPEND so it keeps writing
+    # cleanly after the truncate. Preserve the last N lines for context.
+    with open(path, 'rb') as f:
+        f.seek(max(0, size - 256_000))
+        tail_lines = f.read().splitlines()[-LOG_KEEP_TAIL_LINES:]
+    with open(path, 'wb') as f:
+        f.write(b'--- log rotated by maintain.py ---\n')
+        f.write(b'\n'.join(tail_lines))
+        f.write(b'\n')
+    log(f"Rotated {os.path.basename(path)} (was {size // 1024} KB)")
+
+
 def stats(conn):
     total, indexed = conn.execute(
         'SELECT COUNT(*), SUM(has_transcript) FROM videos'
@@ -128,6 +151,8 @@ if __name__ == '__main__':
     optimize_fts(conn)
     vacuum(conn)
     stats(conn)
+    rotate_log(SERVER_LOG_PATH)
+    rotate_log(LOG_PATH)
 
     conn.close()
     log("=== maintenance done ===")

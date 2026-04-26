@@ -1,5 +1,7 @@
 venv/
 videos.db
+videos.db-shm
+videos.db-wal
 *.log
 __pycache__/
 *.pyc

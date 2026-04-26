@@ -11,17 +11,12 @@ import os
 import shutil
 import sqlite3
 import subprocess
-import sys
 import tempfile
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-if getattr(sys, 'frozen', False):
-    _data_dir = os.path.expanduser('~/Library/Application Support/MyYouTubeSearch')
-    os.makedirs(_data_dir, exist_ok=True)
-    DB_PATH = os.path.join(_data_dir, 'videos.db')
-else:
-    DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'videos.db')
+from paths import DB_PATH
+
 PORT = 7799
 
 
@@ -60,10 +55,16 @@ def _write_segments(video_id, segments):
     conn.close()
 
 
+def _resolve_ytdlp():
+    # launchctl's PATH excludes homebrew dirs, so shutil.which alone fails under LaunchAgents.
+    for candidate in (shutil.which('yt-dlp'), '/opt/homebrew/bin/yt-dlp', '/usr/local/bin/yt-dlp'):
+        if candidate and os.path.exists(candidate):
+            return candidate
+    raise RuntimeError("yt-dlp not found — install with `brew install yt-dlp`")
+
+
 def _fetch_segments(video_id):
-    ytdlp = shutil.which('yt-dlp')
-    if not ytdlp:
-        raise RuntimeError("yt-dlp not found on PATH — install with `brew install yt-dlp`")
+    ytdlp = _resolve_ytdlp()
     with tempfile.TemporaryDirectory() as tmpdir:
         subprocess.run(
             [

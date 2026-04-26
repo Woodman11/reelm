@@ -13,7 +13,7 @@ import sqlite3
 import subprocess
 import sys
 
-DB_PATH = os.path.join(os.path.dirname(__file__), 'videos.db')
+from paths import DB_PATH
 
 
 def db():

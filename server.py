@@ -61,7 +61,9 @@ def _write_segments(video_id, segments):
 
 
 def _fetch_segments(video_id):
-    ytdlp = '/opt/homebrew/bin/yt-dlp'
+    ytdlp = shutil.which('yt-dlp')
+    if not ytdlp:
+        raise RuntimeError("yt-dlp not found on PATH — install with `brew install yt-dlp`")
     with tempfile.TemporaryDirectory() as tmpdir:
         subprocess.run(
             [

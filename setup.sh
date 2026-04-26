@@ -7,10 +7,16 @@ if ! command -v python3 &>/dev/null; then
   exit 1
 fi
 
+echo "==> Checking yt-dlp..."
+if ! command -v yt-dlp &>/dev/null; then
+  echo "ERROR: yt-dlp is required. Install with: brew install yt-dlp"
+  exit 1
+fi
+
 echo "==> Creating virtual environment..."
 python3 -m venv venv
 
-echo "==> Installing dependencies (this may take a few minutes — Whisper pulls in PyTorch)..."
+echo "==> Installing dependencies..."
 venv/bin/pip install --upgrade pip -q
 venv/bin/pip install -r requirements.txt
 

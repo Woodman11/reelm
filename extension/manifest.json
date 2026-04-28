@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Reelm",
-  "version": "1.4",
+  "version": "1.5",
   "description": "Press Shift+Y while watching to save video for keyword search",
   "permissions": [],
   "background": {
@@ -23,6 +23,10 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
   },
   "content_scripts": [
     {

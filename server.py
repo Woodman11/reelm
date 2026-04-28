@@ -213,6 +213,21 @@ class Handler(BaseHTTPRequestHandler):
             self._reply(200, {'ok': True})
             return
 
+        if self.path == '/wipe':
+            conn = sqlite3.connect(DB_PATH)
+            deleted = conn.execute('SELECT COUNT(*) FROM videos').fetchone()[0]
+            conn.execute('DELETE FROM segments')
+            conn.execute('DELETE FROM videos')
+            conn.commit()
+            conn.close()
+            # VACUUM cannot run inside a transaction — open a fresh autocommit connection.
+            vac = sqlite3.connect(DB_PATH, isolation_level=None)
+            vac.execute('VACUUM')
+            vac.close()
+            print(f"Wiped {deleted} videos")
+            self._reply(200, {'deleted': deleted})
+            return
+
         if self.path != '/save':
             self.send_response(404)
             self.end_headers()

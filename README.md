@@ -4,6 +4,15 @@ Save YouTube videos with **Shift+Y** while watching, then search across the
 auto-generated transcripts of every video you've saved. Local SQLite + FTS5,
 no cloud.
 
+<!-- DEMO: drop the recorded screencast at assets/demo.gif (or .mp4) and
+     uncomment the block below. Recommended: 30s, 640×400, ~10fps GIF
+     (under ~5MB) showing: save with Shift+Y → search popup → click result
+     → YouTube jumps to the spoken-word timestamp.
+<p align="center">
+  <img src="assets/demo.gif" alt="Reelm demo: save a YouTube video with Shift+Y, search across saved transcripts, jump to the spoken word" width="640">
+</p>
+-->
+
 ```
 [Chrome extension] --Shift+Y--> [localhost:7799 server] --> videos.db (FTS5)
                                         |

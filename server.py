@@ -214,6 +214,9 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if self.path == '/wipe':
+            from datetime import datetime
+            backup = DB_PATH.replace('.db', f'.backup-{datetime.now().strftime("%Y%m%d-%H%M%S")}.db')
+            shutil.copy2(DB_PATH, backup)
             conn = sqlite3.connect(DB_PATH)
             deleted = conn.execute('SELECT COUNT(*) FROM videos').fetchone()[0]
             conn.execute('DELETE FROM segments')
@@ -224,7 +227,7 @@ class Handler(BaseHTTPRequestHandler):
             vac = sqlite3.connect(DB_PATH, isolation_level=None)
             vac.execute('VACUUM')
             vac.close()
-            print(f"Wiped {deleted} videos")
+            print(f"Wiped {deleted} videos — backup at {backup}")
             self._reply(200, {'deleted': deleted})
             return
 

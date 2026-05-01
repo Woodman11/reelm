@@ -41,3 +41,7 @@ Or simply delete `~/Library/Application Support/Reelm/videos.db` to wipe your sa
 Source code: <https://github.com/Woodman11/reelm>
 
 Issues and questions: <https://github.com/Woodman11/reelm/issues>
+
+## Credits
+
+Extension icon: ["Search Video"](https://thenounproject.com/icon/4345473/) by [Injamamul hoq miraz](https://thenounproject.com/mirazhosen10/) from [The Noun Project](https://thenounproject.com), used under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/). Mirrored from the original.

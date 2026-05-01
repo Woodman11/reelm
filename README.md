@@ -99,11 +99,11 @@ rm -rf ~/Library/Application\ Support/Reelm
 For working on the code directly:
 
 ```bash
-brew install python yt-dlp
+brew install go yt-dlp
 git clone https://github.com/Woodman11/reelm ~/reelm
 cd ~/reelm
-./setup.sh
-venv/bin/python server.py
+go build -o reelm .
+./reelm serve
 ```
 
 Then load the extension as above, pointing at `~/reelm/extension`.
@@ -112,8 +112,8 @@ Then load the extension as above, pointing at `~/reelm/extension`.
 
 Two LaunchAgent plists are included for source installs:
 
-- `com.james.reelm.plist` — runs `server.py` continuously
-- `com.james.reelm-maintain.plist` — runs `maintain.py` every 15 min
+- `com.james.reelm.plist` — runs `reelm serve` continuously
+- `com.james.reelm-maintain.plist` — runs `reelm maintain` every 15 min
   to retry failed transcripts and optimize the FTS index
 
 **Both plists are user-specific.** Before installing, edit them:
@@ -136,37 +136,43 @@ launchctl load ~/Library/LaunchAgents/com.<you>.reelm-maintain.plist
 
 - **Save a video:** Shift+Y on any `youtube.com/watch?v=…` page
 - **Search:** click the extension icon → type a query
-- **CLI search:** `venv/bin/python search.py "your query"`
-- **Maintenance run:** `venv/bin/python maintain.py`
+- **CLI search:** `./reelm search "your query"` (Homebrew: `reelm search "your query"`)
+- **Maintenance run:** `./reelm maintain` (Homebrew: `reelm-maintain`)
 
 ## Files
 
 | File | Purpose |
 |------|---------|
-| `server.py` | HTTP server on `localhost:7799`, accepts saves, indexes transcripts |
-| `maintain.py` | Retries failed transcripts, optimizes FTS5, vacuums |
-| `app.py` | Optional menu-bar wrapper around `server.py` (uses `rumps`) |
-| `search.py` | CLI search |
+| `main.go` | Entry point — dispatches `serve`, `maintain`, `search` |
+| `server.go` | HTTP server on `localhost:7799`, accepts saves, indexes transcripts |
+| `maintain.go` | Retries failed transcripts, optimizes FTS5, vacuums |
+| `search.go` | CLI search |
+| `db.go` | SQLite open/schema/migration helpers |
+| `ytdlp.go` | yt-dlp subprocess wrapper |
 | `extension/` | Chrome MV3 extension (manifest, content/background/popup scripts) |
-| `videos.db` | SQLite DB (created on first run, gitignored) |
-| `setup.sh` | Creates venv, installs deps |
+| `app.py` | Optional menu-bar wrapper (uses `rumps`, Python) |
 | `build.sh` | Builds standalone `.app` via PyInstaller (optional) |
 
 ## Migrating existing data
 
-`videos.db` is gitignored. To copy your indexed library to a new Mac:
+The database lives outside the repo. To copy your indexed library to a new Mac:
 
 ```bash
-scp old-mac:~/reelm/videos.db ~/reelm/videos.db
+scp old-mac:"~/Library/Application Support/Reelm/videos.db" \
+    ~/Library/Application\ Support/Reelm/videos.db
 ```
 
 ## Troubleshooting
 
 - **Extension popup shows "server offline"** → run `brew services start reelm`.
   Check `~/Library/Logs/reelm/server.log` for crash details.
-- **Toast says "Server not running"** → start `server.py`, or check
+- **Toast says "Server not running"** → run `./reelm serve`, or check
   `~/Library/LaunchAgents/` is loaded (`launchctl list | grep reelm`)
 - **Saves work but transcripts never index** → verify `yt-dlp` is on PATH
   (`which yt-dlp`) and is recent (`yt-dlp --version` ≥ 2026.03.17)
 - **Shift+Y does nothing** → reload the YouTube tab after installing the
   extension
+
+## Credits
+
+Extension icon: ["Search Video"](https://thenounproject.com/icon/4345473/) by [Injamamul hoq miraz](https://thenounproject.com/mirazhosen10/) from [The Noun Project](https://thenounproject.com), used under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/). Mirrored from the original.

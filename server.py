@@ -171,7 +171,8 @@ class Handler(BaseHTTPRequestHandler):
                 FROM segments s
                 JOIN videos v ON v.id = s.video_id
                 WHERE segments MATCH ?
-                ORDER BY v.indexed_at DESC
+                GROUP BY s.video_id
+                ORDER BY rank
                 LIMIT 25
             ''', (q,)).fetchall()
             conn.close()

@@ -86,14 +86,24 @@ func (s *server) handleSearch(w http.ResponseWriter, r *http.Request) {
 		s.jsonReply(w, 400, map[string]any{"results": []any{}, "error": "Missing query"})
 		return
 	}
+	// Window-function query: cap each video to 5 segments, order videos by their
+	// best matching segment's rank, total cap 100. Replaces an earlier GROUP BY
+	// that collapsed each video to a single timestamp. popup.js groups the flat
+	// list client-side and renders a "▶ N more timestamps" toggle per video.
 	rows, err := s.db.Query(`
-		SELECT v.title, s.video_id, s.start_secs, v.indexed_at
-		FROM segments s
-		JOIN videos v ON v.id = s.video_id
-		WHERE segments MATCH ?
-		GROUP BY s.video_id
-		ORDER BY rank
-		LIMIT 25
+		WITH ranked AS (
+			SELECT v.title, s.video_id, s.start_secs, v.indexed_at,
+			       ROW_NUMBER() OVER (PARTITION BY s.video_id ORDER BY rank) AS seg_rank,
+			       MIN(rank)   OVER (PARTITION BY s.video_id)                AS best_rank
+			FROM segments s
+			JOIN videos v ON v.id = s.video_id
+			WHERE segments MATCH ?
+		)
+		SELECT title, video_id, start_secs, indexed_at
+		FROM ranked
+		WHERE seg_rank <= 5
+		ORDER BY best_rank, seg_rank
+		LIMIT 100
 	`, q)
 	if err != nil {
 		s.jsonReply(w, 500, map[string]any{"results": []any{}, "error": err.Error()})

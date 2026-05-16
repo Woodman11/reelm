@@ -1,8 +1,12 @@
 # reeLm
 
-Save YouTube videos with **Shift+Y** while watching, then search across the
-auto-generated transcripts of every video you've saved. Local SQLite + FTS5,
-no cloud.
+**External memory for the YouTube videos you've already saved.**
+
+Press **Shift+Y** while watching → reeLm captures the transcript and stores
+it locally. Later, type any phrase you remember — across every video you've
+saved — and jump to the exact second it was said.
+
+No cloud, no account, no API key. Local SQLite + FTS5. ~50 MB per 1,000 saves.
 
 <!-- DEMO: drop the recorded screencast at assets/demo.gif (or .mp4) and
      uncomment the block below. Recommended: 30s, 640×400, ~10fps GIF

@@ -66,11 +66,12 @@ func openDB() (*sql.DB, error) {
 		db.Close()
 		return nil, err
 	}
+	db.Exec("PRAGMA wal_autocheckpoint=1000")
 	return db, nil
 }
 
 func initSchema(db *sql.DB) error {
-	_, err := db.Exec(`
+	if _, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS videos (
 			id             TEXT PRIMARY KEY,
 			title          TEXT,
@@ -84,8 +85,12 @@ func initSchema(db *sql.DB) error {
 			text,
 			tokenize   = "porter unicode61"
 		);
-	`)
-	return err
+	`); err != nil {
+		return err
+	}
+	// Idempotent migration — errors with "duplicate column name" after the first run.
+	db.Exec("ALTER TABLE videos ADD COLUMN retry_count INTEGER DEFAULT 0")
+	return nil
 }
 
 func copyFile(src, dst string) error {

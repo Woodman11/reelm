@@ -241,6 +241,16 @@ func (s *server) writeSegments(videoID string, segs []segment) {
 	if err != nil {
 		return
 	}
+	defer tx.Rollback()
+
+	var hasTranscript int
+	if err := tx.QueryRow("SELECT has_transcript FROM videos WHERE id=?", videoID).Scan(&hasTranscript); err != nil {
+		return
+	}
+	if hasTranscript != 0 {
+		return // someone else (other goroutine or maintain process) won the race
+	}
+
 	tx.Exec("UPDATE videos SET has_transcript=1 WHERE id=?", videoID)
 	for _, seg := range segs {
 		tx.Exec(

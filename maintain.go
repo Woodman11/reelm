@@ -11,6 +11,7 @@ import (
 const (
 	logRotateBytes = 1_000_000
 	logKeepLines   = 200
+	maxRetries     = 5
 )
 
 func runMaintain() {
@@ -20,6 +21,10 @@ func runMaintain() {
 		os.Exit(1)
 	}
 	defer db.Close()
+	if err := initSchema(db); err != nil {
+		fmt.Fprintf(os.Stderr, "reelm maintain: init schema: %v\n", err)
+		os.Exit(1)
+	}
 
 	mlog := func(msg string) {
 		fmt.Printf("[%s] %s\n", time.Now().Format("2006-01-02 15:04:05"), msg)
@@ -41,8 +46,8 @@ func runMaintain() {
 	mlog("=== maintenance start ===")
 	statsLine("Stats: ")
 
-	// Retry missing transcripts
-	rows, _ := db.Query("SELECT id, title FROM videos WHERE has_transcript=0")
+	// Retry missing transcripts (skip ones that have already failed maxRetries times)
+	rows, _ := db.Query("SELECT id, title FROM videos WHERE has_transcript=0 AND retry_count < ?", maxRetries)
 	type vid struct{ id, title string }
 	var missing []vid
 	for rows.Next() {
@@ -52,6 +57,12 @@ func runMaintain() {
 	}
 	rows.Close()
 
+	var skipped int
+	db.QueryRow("SELECT COUNT(*) FROM videos WHERE has_transcript=0 AND retry_count >= ?", maxRetries).Scan(&skipped)
+	if skipped > 0 {
+		mlog(fmt.Sprintf("Retry: %d video(s) skipped (exceeded %d retries — likely unavailable)", skipped, maxRetries))
+	}
+
 	if len(missing) == 0 {
 		mlog("Retry: no videos missing transcripts")
 	} else {
@@ -60,14 +71,23 @@ func runMaintain() {
 		for _, v := range missing {
 			segs, err := fetchSegments(v.id)
 			if err != nil {
+				db.Exec("UPDATE videos SET retry_count = retry_count + 1 WHERE id=?", v.id)
 				mlog(fmt.Sprintf("  FAIL %s — %s: %v", v.id, v.title, err))
 				continue
 			}
 			if len(segs) == 0 {
+				db.Exec("UPDATE videos SET retry_count = retry_count + 1 WHERE id=?", v.id)
 				mlog(fmt.Sprintf("  FAIL %s — %s: no subtitles available", v.id, v.title))
 				continue
 			}
 			tx, _ := db.Begin()
+			// Re-check inside tx in case the server's fetchAndIndex already wrote segments.
+			var hasTranscript int
+			if err := tx.QueryRow("SELECT has_transcript FROM videos WHERE id=?", v.id).Scan(&hasTranscript); err != nil || hasTranscript != 0 {
+				tx.Rollback()
+				mlog(fmt.Sprintf("  SKIP %s — %s: already indexed by server", v.id, v.title))
+				continue
+			}
 			tx.Exec("UPDATE videos SET has_transcript=1 WHERE id=?", v.id)
 			for _, seg := range segs {
 				tx.Exec("INSERT INTO segments(video_id, start_secs, text) VALUES (?,?,?)",
@@ -85,6 +105,10 @@ func runMaintain() {
 
 	db.Exec("VACUUM")
 	mlog("VACUUM: done")
+
+	if _, err := db.Exec("PRAGMA wal_checkpoint(TRUNCATE)"); err == nil {
+		mlog("WAL checkpoint: done")
+	}
 
 	statsLine("Stats: ")
 

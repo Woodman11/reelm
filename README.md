@@ -1,6 +1,6 @@
 # reeLm
 
-**External memory for the YouTube videos you've already saved.**
+**Find the moment you forgot, in the YouTube video you saved months ago.**
 
 Press **Shift+Y** while watching → reeLm captures the transcript and stores
 it locally. Later, type any phrase you remember — across every video you've

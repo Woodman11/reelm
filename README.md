@@ -154,8 +154,6 @@ launchctl load ~/Library/LaunchAgents/com.<you>.reelm-maintain.plist
 | `db.go` | SQLite open/schema/migration helpers |
 | `ytdlp.go` | yt-dlp subprocess wrapper |
 | `extension/` | Chrome MV3 extension (manifest, content/background/popup scripts) |
-| `app.py` | Optional menu-bar wrapper (uses `rumps`, Python) |
-| `build.sh` | Builds standalone `.app` via PyInstaller (optional) |
 
 ## Migrating existing data
 

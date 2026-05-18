@@ -208,7 +208,7 @@ Homebrew users skip this — `brew services` handles it.
 
 ## License
 
-MIT © James
+MIT © James Woods
 
 ---
 

@@ -10,9 +10,7 @@
 
 Press **Shift+Y** while watching any YouTube video. reeLm captures the transcript and stores it locally. Search any phrase you remember — across your entire saved library — and jump to the exact second it was said.
 
-<!-- DEMO: drop the recorded screencast at assets/demo.gif and uncomment
-<img src="assets/demo.gif" alt="reeLm demo: save a YouTube video with Shift+Y, search across saved transcripts, jump to the exact spoken word" width="640">
--->
+[![reeLm demo video](https://img.youtube.com/vi/4G9BtYasf94/maxresdefault.jpg)](https://www.youtube.com/watch?v=4G9BtYasf94)
 
 </div>
 

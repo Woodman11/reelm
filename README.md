@@ -23,6 +23,13 @@ No cloud, no account, no API key. Local SQLite + FTS5. ~50 MB per 1,000 saves.
                                         +-- yt-dlp (transcript fallback)
 ```
 
+## Requirements
+
+- **macOS on Apple Silicon** (M1/M2/M3/M4) — CI tests every release on macOS 14+.
+  Intel Macs are untested; the formula builds from source so it may work, but it
+  isn't supported.
+- **Google Chrome** (or a Chromium-based browser that loads unpacked MV3 extensions).
+
 ## Install (macOS, recommended — Homebrew)
 
 If you don't already have [Homebrew](https://brew.sh) installed:

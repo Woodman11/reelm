@@ -1,44 +1,70 @@
+<div align="center">
+
 # reeLm
 
-**Find the moment you forgot, in the YouTube video you saved months ago.**
+**Full-text search across every YouTube video you've ever saved.**
 
-Press **Shift+Y** while watching → reeLm captures the transcript and stores
-it locally. Later, type any phrase you remember — across every video you've
-saved — and jump to the exact second it was said.
+[![Latest release](https://img.shields.io/github/v/release/Woodman11/reelm?label=latest&color=blue)](https://github.com/Woodman11/reelm/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-macOS%20Apple%20Silicon-lightgrey?logo=apple&logoColor=white)](https://github.com/Woodman11/reelm)
 
-No cloud, no account, no API key. Local SQLite + FTS5. ~50 MB per 1,000 saves.
+Press **Shift+Y** while watching any YouTube video. reeLm captures the transcript and stores it locally. Search any phrase you remember — across your entire saved library — and jump to the exact second it was said.
 
-<!-- DEMO: drop the recorded screencast at assets/demo.gif (or .mp4) and
-     uncomment the block below. Recommended: 30s, 640×400, ~10fps GIF
-     (under ~5MB) showing: save with Shift+Y → search popup → click result
-     → YouTube jumps to the spoken-word timestamp.
-<p align="center">
-  <img src="assets/demo.gif" alt="reeLm demo: save a YouTube video with Shift+Y, search across saved transcripts, jump to the spoken word" width="640">
-</p>
+<!-- DEMO: drop the recorded screencast at assets/demo.gif and uncomment
+<img src="assets/demo.gif" alt="reeLm demo: save a YouTube video with Shift+Y, search across saved transcripts, jump to the exact spoken word" width="640">
 -->
 
+</div>
+
+---
+
+## Why reeLm?
+
+You've watched thousands of hours of YouTube — tutorials, talks, interviews, lectures. You vaguely remember a technique, a quote, or a statistic but can't find which video or which moment.
+
+reeLm solves this with one keypress. Save a video in under a second; search your entire library in milliseconds.
+
+## Features
+
+- **Shift+Y to save** — one keystroke on any YouTube watch page indexes the full transcript
+- **Instant full-text search** — SQLite FTS5, sub-millisecond queries across thousands of videos
+- **Jump to the second** — click any result to resume playback at the exact spoken word
+- **100% local** — no cloud, no account, no API key; your data never leaves your Mac
+- **Lightweight** — ~50 MB per 1,000 saved videos
+
+## How it works
+
 ```
-[Chrome extension] --Shift+Y--> [localhost:7799 server] --> videos.db (FTS5)
-                                        |
-                                        +-- yt-dlp (transcript fallback)
+[Chrome extension] ──Shift+Y──▶ [localhost:7799 server] ──▶ videos.db (FTS5)
+                                          │
+                                          └── yt-dlp (transcript fallback)
 ```
+
+The extension fires on Shift+Y, sending the video ID to a local Go server. The server fetches the transcript (YouTube's caption API, with yt-dlp as fallback), indexes it into SQLite FTS5, and confirms with an on-page toast.
+
+---
 
 ## Requirements
 
-- **macOS on Apple Silicon** (M1/M2/M3/M4) — CI tests every release on macOS 14+.
-  Intel Macs are untested; the formula builds from source so it may work, but it
-  isn't supported.
-- **Google Chrome** (or a Chromium-based browser that loads unpacked MV3 extensions).
+| Requirement | Details |
+|-------------|---------|
+| **macOS** | Apple Silicon (M1–M4). CI tests every release on macOS 14+. Intel Macs are untested. |
+| **Browser** | Google Chrome or any Chromium-based browser that loads unpacked MV3 extensions |
+| **yt-dlp** | Installed automatically via Homebrew; required for transcript fallback |
 
-## Install (macOS, recommended — Homebrew)
+---
 
-If you don't already have [Homebrew](https://brew.sh) installed:
+## Install
+
+### Homebrew (recommended)
+
+If you don't have [Homebrew](https://brew.sh) yet:
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-Then:
+Then install reeLm:
 
 ```bash
 brew tap Woodman11/reelm
@@ -46,38 +72,34 @@ brew install reelm
 brew services start reelm
 ```
 
-Then load the Chrome extension (one-time, manual — not yet on the Web Store):
+### Load the Chrome extension (one-time)
+
+> The extension is pending Chrome Web Store approval. Until then, load it manually in Developer mode — takes about 30 seconds.
 
 1. Open `chrome://extensions`
-2. Enable **Developer mode** (top right)
-3. Click **Load unpacked** — in the dialog press **Cmd+Shift+G**, paste:
-   `/opt/homebrew/opt/reelm/libexec/extension` and hit Enter
-4. Pin the icon if you want the popup search
+2. Enable **Developer mode** (toggle, top-right)
+3. Click **Load unpacked**
+4. In the dialog press **Cmd+Shift+G**, paste the path below, and press Enter:
+   ```
+   /opt/homebrew/opt/reelm/libexec/extension
+   ```
+5. Click **Select**
+6. Pin the reeLm icon if you want one-click popup search
 
-Open any YouTube video and press **Shift+Y** — a toast confirms the save
-and the transcript indexes in the background.
+Open any YouTube video and press **Shift+Y** — a toast confirms the save.
 
-### What to expect on first run
+### First-run prompts
 
-- macOS may prompt you to allow Python to accept incoming network connections
-  the first time the server binds. The server only listens on `127.0.0.1`,
-  so denying the prompt won't break anything — Allow is fine either way.
-- Chrome will show a "Disable developer mode extensions" banner each time
-  you launch the browser. That's expected for unpacked extensions and will
-  go away once we publish to the Web Store.
-- The first save on a new YouTube tab may trigger a one-time Private Network
-  Access prompt — accept it.
-- **macOS blocks the background service on first install.** You'll see a
-  system notification that reeLm "added items that can run in the background."
-  Go to **System Settings → General → Login Items & Extensions**, find the
-  magnifying glass entry for reeLm, toggle it **off then back on**, then run
-  `brew services restart reelm`.
+| Prompt | What to do |
+|--------|-----------|
+| macOS firewall dialog ("allow Python to accept connections") | Either choice works — the server only listens on `127.0.0.1` |
+| Chrome "Disable developer mode extensions" banner | Expected until the Store listing goes live; safe to dismiss |
+| Private Network Access prompt on first save | Accept it |
+| System notification: "reeLm added items that can run in the background" | Go to **System Settings → General → Login Items & Extensions**, find reeLm, toggle it **off → on**, then run `brew services restart reelm` |
 
 ### Shared Mac / multi-user installs
 
-If Homebrew was installed by a different user on the same Mac, you may see
-`/opt/homebrew is not writable` errors. Fix ownership for your user, then
-reinstall:
+If Homebrew was installed by a different user:
 
 ```bash
 sudo chown -R $(whoami) /opt/homebrew
@@ -85,19 +107,31 @@ brew reinstall reelm
 brew services start reelm
 ```
 
-### Privacy / data location
+---
 
-Everything stays on your Mac:
+## Usage
 
-- **Database:** `~/Library/Application Support/Reelm/videos.db`
-  (titles, video IDs, save timestamps, full auto-generated transcripts).
-  Older `~/Library/Application Support/MyYouTubeSearch/` DBs are migrated
-  automatically on first run.
-- **Logs:** `~/Library/Logs/reelm/server.log`
-- **No network egress** beyond `youtube.com` (for transcript fetches) and
-  the local server on `127.0.0.1:7799`.
+| Action | Command |
+|--------|---------|
+| Save a video | **Shift+Y** on any `youtube.com/watch?v=…` page |
+| Search (popup) | Click the extension icon → type your query |
+| Search (CLI) | `reelm search "phrase you remember"` |
+| Maintenance run | `reelm-maintain` — retries failed transcripts, optimizes FTS5 |
 
-To wipe everything:
+---
+
+## Privacy & data
+
+Everything stays on your Mac. The only outbound traffic is to `youtube.com` to fetch transcripts.
+
+| Data | Location |
+|------|---------|
+| Database (titles, video IDs, timestamps, transcripts) | `~/Library/Application Support/Reelm/videos.db` |
+| Server logs | `~/Library/Logs/reelm/server.log` |
+
+Existing databases in the legacy `~/Library/Application Support/MyYouTubeSearch/` location are migrated automatically on first run.
+
+**To uninstall completely:**
 
 ```bash
 brew services stop reelm
@@ -105,9 +139,31 @@ brew uninstall reelm
 rm -rf ~/Library/Application\ Support/Reelm
 ```
 
-## Install (developer / from source)
+---
 
-For working on the code directly:
+## Troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| Extension popup shows "server offline" | `brew services start reelm` — check `~/Library/Logs/reelm/server.log` for details |
+| Toast says "Server not running" | Run `reelm serve`, or check `launchctl list \| grep reelm` |
+| Saves work but transcripts never index | Verify yt-dlp: `which yt-dlp` and `yt-dlp --version` ≥ 2026.03.17 |
+| Shift+Y does nothing | Reload the YouTube tab after installing the extension |
+
+---
+
+## Migrating to a new Mac
+
+The database lives outside the repo — copy it across with:
+
+```bash
+scp old-mac:"~/Library/Application Support/Reelm/videos.db" \
+    ~/Library/Application\ Support/Reelm/videos.db
+```
+
+---
+
+## Install from source
 
 ```bash
 brew install go yt-dlp
@@ -117,23 +173,16 @@ go build -o reelm .
 ./reelm serve
 ```
 
-Then load the extension as above, pointing at `~/reelm/extension`.
+Load the extension from `~/reelm/extension` using the same steps above.
 
-### (Optional) Dev auto-start at login
+### Auto-start at login (source installs only)
 
-Two LaunchAgent plists are included for source installs:
+Two LaunchAgent plists are included. Before installing, edit both — replace `com.james.…` with your own prefix and update the install path:
 
-- `com.james.reelm.plist` — runs `reelm serve` continuously
-- `com.james.reelm-maintain.plist` — runs `reelm maintain` every 15 min
-  to retry failed transcripts and optimize the FTS index
-
-**Both plists are user-specific.** Before installing, edit them:
-
-- Change the `Label` (`com.james.…`) to your own prefix
-- Replace `/Users/james/Systems-Admin/youtube-search/` with the actual
-  install path
-
-Then:
+| Plist | Purpose |
+|-------|---------|
+| `com.james.reelm.plist` | Runs `reelm serve` continuously |
+| `com.james.reelm-maintain.plist` | Runs `reelm maintain` every 15 minutes |
 
 ```bash
 cp com.*.plist ~/Library/LaunchAgents/
@@ -141,47 +190,30 @@ launchctl load ~/Library/LaunchAgents/com.<you>.reelm.plist
 launchctl load ~/Library/LaunchAgents/com.<you>.reelm-maintain.plist
 ```
 
-(Brew users skip this whole section — `brew services` handles it.)
+Homebrew users skip this — `brew services` handles it.
 
-## Usage
+---
 
-- **Save a video:** Shift+Y on any `youtube.com/watch?v=…` page
-- **Search:** click the extension icon → type a query
-- **CLI search:** `./reelm search "your query"` (Homebrew: `reelm search "your query"`)
-- **Maintenance run:** `./reelm maintain` (Homebrew: `reelm-maintain`)
-
-## Files
+## Codebase overview
 
 | File | Purpose |
 |------|---------|
 | `main.go` | Entry point — dispatches `serve`, `maintain`, `search` |
-| `server.go` | HTTP server on `localhost:7799`, accepts saves, indexes transcripts |
-| `maintain.go` | Retries failed transcripts, optimizes FTS5, vacuums |
+| `server.go` | HTTP server on `localhost:7799`; accepts saves, indexes transcripts |
+| `maintain.go` | Retries failed transcripts, optimizes FTS5, vacuums DB |
 | `search.go` | CLI search |
-| `db.go` | SQLite open/schema/migration helpers |
+| `db.go` | SQLite open / schema / migration helpers |
 | `ytdlp.go` | yt-dlp subprocess wrapper |
-| `extension/` | Chrome MV3 extension (manifest, content/background/popup scripts) |
+| `extension/` | Chrome MV3 extension (manifest, content / background / popup scripts) |
 
-## Migrating existing data
+---
 
-The database lives outside the repo. To copy your indexed library to a new Mac:
+## License
 
-```bash
-scp old-mac:"~/Library/Application Support/Reelm/videos.db" \
-    ~/Library/Application\ Support/Reelm/videos.db
-```
+MIT © James
 
-## Troubleshooting
-
-- **Extension popup shows "server offline"** → run `brew services start reelm`.
-  Check `~/Library/Logs/reelm/server.log` for crash details.
-- **Toast says "Server not running"** → run `./reelm serve`, or check
-  `~/Library/LaunchAgents/` is loaded (`launchctl list | grep reelm`)
-- **Saves work but transcripts never index** → verify `yt-dlp` is on PATH
-  (`which yt-dlp`) and is recent (`yt-dlp --version` ≥ 2026.03.17)
-- **Shift+Y does nothing** → reload the YouTube tab after installing the
-  extension
+---
 
 ## Credits
 
-Extension icon: ["Search Video"](https://thenounproject.com/icon/4345473/) by [Injamamul hoq miraz](https://thenounproject.com/mirazhosen10/) from [The Noun Project](https://thenounproject.com), used under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/). Mirrored from the original.
+Extension icon: ["Search Video"](https://thenounproject.com/icon/4345473/) by [Injamamul hoq miraz](https://thenounproject.com/mirazhosen10/) from [The Noun Project](https://thenounproject.com), used under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).

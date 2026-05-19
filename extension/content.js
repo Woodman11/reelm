@@ -36,33 +36,31 @@ document.addEventListener('keydown', (e) => {
   );
 }, true);
 
-// Parse captionTracks directly from ytInitialPlayerResponse in the page's script tags.
-// No script injection needed — avoids YouTube's CSP.
-function getCaptionUrl() {
-  for (const script of document.querySelectorAll('script')) {
-    const t = script.textContent;
-    if (!t.includes('"captionTracks"')) continue;
-    try {
-      const idx = t.indexOf('"captionTracks"');
-      const arrStart = t.indexOf('[', idx);
-      let depth = 0, i = arrStart;
-      for (; i < t.length; i++) {
-        if (t[i] === '[') depth++;
-        else if (t[i] === ']') { if (--depth === 0) break; }
-      }
-      const tracks = JSON.parse(t.slice(arrStart, i + 1));
-      const asr = tracks.find(tr => tr.languageCode === 'en' && tr.kind === 'asr');
-      const manual = tracks.find(tr => tr.languageCode === 'en');
-      const track = asr || manual || tracks[0];
-      if (track?.baseUrl) return track.baseUrl;
-    } catch {}
+// Read transcript segments directly from YouTube's transcript panel DOM.
+// YouTube no longer embeds captionTracks in inline scripts; DOM reading is reliable
+// when the panel is open, which happens automatically after a video page load.
+function getTranscriptFromDOM() {
+  const segs = document.querySelectorAll('ytd-transcript-segment-renderer');
+  if (!segs.length) return null;
+  const result = [];
+  for (const seg of segs) {
+    const timeEl = seg.querySelector('.segment-timestamp');
+    const textEl = seg.querySelector('.segment-text');
+    if (!timeEl || !textEl) continue;
+    const text = textEl.textContent.trim().replace(/\s+/g, ' ');
+    if (!text) continue;
+    const parts = timeEl.textContent.trim().split(':').map(Number);
+    const start = parts.length === 3
+      ? parts[0] * 3600 + parts[1] * 60 + parts[2]
+      : parts[0] * 60 + (parts[1] || 0);
+    result.push({start, text});
   }
-  return null;
+  return result.length ? result : null;
 }
 
 function uploadTranscript(videoId) {
-  const captionUrl = getCaptionUrl();
-  chrome.runtime.sendMessage({type: 'transcript', data: {videoId, captionUrl}});
+  const segments = getTranscriptFromDOM();
+  chrome.runtime.sendMessage({type: 'transcript', data: {videoId, segments}});
 }
 
 function showToast(msg, type = 'ok') {

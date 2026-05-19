@@ -16,7 +16,7 @@ document.addEventListener('keydown', (e) => {
   if (!videoId) return; // not on a watch page, ignore silently
 
   const currentTime = Math.floor(video.currentTime);
-  const title = document.title.replace(/ - YouTube$/, '').trim();
+  const title = document.title.replace(/ - YouTube$/, '').replace(/^\(\d+\)\s*/, '').trim();
 
   // Route through background service worker to avoid Private Network Access block
   chrome.runtime.sendMessage(

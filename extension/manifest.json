@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "reeLm",
-  "version": "1.5",
+  "version": "1.6",
   "description": "Press Shift+Y while watching to save video for keyword search",
   "permissions": [],
   "background": {

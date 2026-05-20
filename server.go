@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 )
+
+var ytNotifPrefix = regexp.MustCompile(`^\(\d+\)\s*`)
 
 type server struct {
 	db *sql.DB
@@ -144,7 +147,7 @@ func (s *server) handleSave(w http.ResponseWriter, r *http.Request) {
 	}
 
 	videoID := strings.TrimSpace(body.VideoID)
-	title := strings.TrimSpace(body.Title)
+	title := ytNotifPrefix.ReplaceAllString(strings.TrimSpace(body.Title), "")
 	if title == "" {
 		title = "Unknown"
 	}

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 440px;
+    height: 280px;
+    overflow: hidden;
+    font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .tile {
+    width: 440px;
+    height: 280px;
+    position: relative;
+    display: flex;
+    overflow: hidden;
+    background: radial-gradient(ellipse at top right, #2a1a1a 0%, #161616 45%, #0e0e0e 100%);
+    border-radius: 4px;
+  }
+  .glow {
+    position: absolute;
+    width: 420px;
+    height: 420px;
+    background: radial-gradient(circle, rgba(220,38,38,0.22) 0%, transparent 55%);
+    top: -140px;
+    right: -120px;
+    pointer-events: none;
+  }
+  .glow2 {
+    position: absolute;
+    width: 240px;
+    height: 240px;
+    background: radial-gradient(circle, rgba(220,38,38,0.08) 0%, transparent 70%);
+    bottom: -80px;
+    left: -60px;
+    pointer-events: none;
+  }
+  /* Left column */
+  .left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 0 28px 0 36px;
+    width: 220px;
+    flex-shrink: 0;
+    z-index: 2;
+  }
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-bottom: 20px;
+  }
+  .logo-icon svg {
+    width: 40px;
+    height: 40px;
+    filter: drop-shadow(0 2px 8px rgba(220,38,38,0.35));
+  }
+  .brand-name {
+    font-size: 40px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.8px;
+  }
+  .tagline {
+    font-size: 15px;
+    line-height: 1.6;
+    letter-spacing: -0.1px;
+  }
+  .tagline-1 {
+    color: #f3f3f3;
+    font-weight: 600;
+  }
+  .tagline-2 {
+    color: #9a9a9a;
+    font-weight: 400;
+  }
+  /* Right column */
+  .right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    padding-right: 16px;
+  }
+  .ui-card {
+    width: 204px;
+    background: linear-gradient(180deg, #2c2c2c 0%, #242424 100%);
+    border-radius: 11px;
+    padding: 13px 14px 14px;
+    box-shadow:
+      0 14px 36px rgba(0,0,0,0.6),
+      0 2px 6px rgba(0,0,0,0.4),
+      0 0 0 1px rgba(255,255,255,0.08),
+      inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  .ui-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .ui-header-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dot-green {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #34d399;
+    box-shadow: 0 0 6px rgba(52,211,153,0.6);
+  }
+  .ui-header-label {
+    font-size: 10px;
+    color: #aaa;
+    font-weight: 600;
+    letter-spacing: 0.1px;
+  }
+  .ui-header-count {
+    font-size: 9px;
+    color: #dc2626;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+  }
+  .ui-search {
+    display: flex;
+    align-items: center;
+    background: #161616;
+    border-radius: 6px;
+    padding: 7px 9px;
+    margin-bottom: 10px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+  }
+  .ui-search-icon svg {
+    width: 12px;
+    height: 12px;
+    margin-right: 7px;
+  }
+  .ui-search-text {
+    font-size: 11px;
+    color: #e8e8e8;
+    font-weight: 500;
+  }
+  .ui-count {
+    font-size: 9px;
+    color: #777;
+    margin-bottom: 6px;
+    letter-spacing: 0.1px;
+  }
+  .ui-result {
+    padding: 6px 0;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+  .ui-result:first-of-type { border-top: none; padding-top: 2px; }
+  .ui-result-title {
+    font-size: 10px;
+    color: #e0e0e0;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+  }
+  .ui-result-meta {
+    font-size: 9px;
+    display: flex;
+    gap: 7px;
+  }
+  .ts { color: #dc2626; font-weight: 700; }
+  .dt { color: #555; }
+  /* Red accent bottom */
+  .tile::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, #dc2626 30%, #ef4444 50%, #dc2626 70%, transparent 100%);
+  }
+</style>
+</head>
+<body>
+<div class="tile">
+  <div class="glow"></div>
+  <div class="glow2"></div>
+
+  <div class="left">
+    <div class="logo-row">
+      <div class="logo-icon">
+        <svg viewBox="0 0 56 56" fill="none">
+          <circle cx="22" cy="22" r="14" stroke="#dc2626" stroke-width="4.5" fill="none"/>
+          <line x1="33" y1="33" x2="48" y2="48" stroke="#dc2626" stroke-width="4.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="brand-name">reeLm</div>
+    </div>
+    <div class="tagline">
+      <span class="tagline-1">Search every transcript.</span><br>
+      <span class="tagline-2">Find the exact moment.</span>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="ui-card">
+      <div class="ui-header">
+        <div class="ui-header-left">
+          <div class="dot-green"></div>
+          <span class="ui-header-label">reeLm</span>
+        </div>
+        <span class="ui-header-count">219 indexed</span>
+      </div>
+      <div class="ui-search">
+        <div class="ui-search-icon">
+          <svg viewBox="0 0 24 24" fill="#dc2626"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        </div>
+        <span class="ui-search-text">hot water tank</span>
+      </div>
+      <div class="ui-count">6 results</div>
+      <div class="ui-result">
+        <div class="ui-result-title">Changing your anode rod…</div>
+        <div class="ui-result-meta">
+          <span class="ts">@ 0:09</span>
+          <span class="dt">Apr 22</span>
+        </div>
+      </div>
+      <div class="ui-result">
+        <div class="ui-result-title">How to flush a water heater</div>
+        <div class="ui-result-meta">
+          <span class="ts">@ 5:22</span>
+          <span class="dt">Mar 14</span>
+        </div>
+      </div>
+      <div class="ui-result">
+        <div class="ui-result-title">Tankless vs tank — which to buy</div>
+        <div class="ui-result-meta">
+          <span class="ts">@ 12:48</span>
+          <span class="dt">Feb 02</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

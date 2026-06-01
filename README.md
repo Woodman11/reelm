@@ -7,6 +7,8 @@
 [![Latest release](https://img.shields.io/github/v/release/Woodman11/reelm?label=latest&color=blue)](https://github.com/Woodman11/reelm/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20Apple%20Silicon-lightgrey?logo=apple&logoColor=white)](https://github.com/Woodman11/reelm)
+[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-add%20to%20Chrome-red?logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/reelm/ldddhlkkgdipacjfljfjkkfhapkgfjkb)
+[![Landing Page](https://img.shields.io/badge/web-reelm.ca-red)](https://reelm.ca)
 
 Press **Shift+Y** while watching any YouTube video. reeLm captures the transcript and stores it locally. Search any phrase you remember — across your entire saved library — and jump to the exact second it was said.
 
@@ -72,26 +74,17 @@ brew services start reelm
 
 ### Load the Chrome extension (one-time)
 
-> The extension is pending Chrome Web Store approval. Until then, load it manually in Developer mode — takes about 30 seconds.
+> [Install from the Chrome Web Store](https://chromewebstore.google.com/detail/reelm/ldddhlkkgdipacjfljfjkkfhapkgfjkb) — one click.
 
-1. Open `chrome://extensions`
-2. Enable **Developer mode** (toggle, top-right)
-3. Click **Load unpacked**
-4. In the dialog press **Cmd+Shift+G**, paste the path below, and press Enter:
-   ```
-   /opt/homebrew/opt/reelm/libexec/extension
-   ```
-5. Click **Select**
-6. Pin the reeLm icon if you want one-click popup search
-
-Open any YouTube video and press **Shift+Y** — a toast confirms the save.
+1. Open that link and click **Add to Chrome**
+2. Open any YouTube video and press **Shift+Y** — a toast confirms the save
+3. Pin the reeLm icon if you want one-click popup search
 
 ### First-run prompts
 
 | Prompt | What to do |
 |--------|-----------|
 | macOS firewall dialog ("allow Python to accept connections") | Either choice works — the server only listens on `127.0.0.1` |
-| Chrome "Disable developer mode extensions" banner | Expected until the Store listing goes live; safe to dismiss |
 | Private Network Access prompt on first save | Accept it |
 | System notification: "reeLm added items that can run in the background" | Go to **System Settings → General → Login Items & Extensions**, find reeLm, toggle it **off → on**, then run `brew services restart reelm` |
 

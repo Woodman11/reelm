@@ -83,8 +83,41 @@ func (s *server) handleStats(w http.ResponseWriter, _ *http.Request) {
 	s.jsonReply(w, 200, map[string]int{"total": total, "indexed": indexed})
 }
 
+func sanitizeFTSQuery(q string) string {
+	// FTS5 interprets . as column-name separator, and has special chars
+	// for AND/OR/NOT/NEAR/phrase/wildcard operators.  For a general-purpose
+	// search-box we treat the query as plain words instead.
+	//
+	// Steps:
+	//   1. Replace dots with spaces (avoid column:value parsing)
+	//   2. Replace FTS5 operators that clash with normal text
+	//   3. Collapse runs of whitespace
+	sb := new(strings.Builder)
+	inQuote := false
+	for _, r := range q {
+		switch {
+		case r == '"':
+			// Pass through double-quotes so the user can force a phrase search
+			sb.WriteRune(r)
+			inQuote = !inQuote
+		case r == '.':
+			sb.WriteRune(' ')
+		case strings.ContainsRune(`*()+^~-`, r):
+			// Strip FTS5 special characters (they're not useful in
+			// plain-language search)
+			if r == '-' || r == '~' {
+				sb.WriteRune(' ')
+			}
+			// everything else just gets dropped
+		default:
+			sb.WriteRune(r)
+		}
+	}
+	return strings.TrimSpace(sb.String())
+}
+
 func (s *server) handleSearch(w http.ResponseWriter, r *http.Request) {
-	q := strings.TrimSpace(r.URL.Query().Get("q"))
+	q := sanitizeFTSQuery(r.URL.Query().Get("q"))
 	if q == "" {
 		s.jsonReply(w, 400, map[string]any{"results": []any{}, "error": "Missing query"})
 		return

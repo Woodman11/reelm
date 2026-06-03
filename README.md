@@ -137,7 +137,7 @@ rm -rf ~/Library/Application\ Support/Reelm
 | Symptom | Fix |
 |---------|-----|
 | Extension popup shows "server offline" | `brew services start reelm` — check `~/Library/Logs/reelm/server.log` for details |
-| Toast says "Server not running" | Run `reelm serve`, or check `launchctl list \| grep reelm` |
+| Toast says "Server not running" | `brew services start reelm` — check `~/Library/Logs/reelm/server.log` for errors |
 | Saves work but transcripts never index | Verify yt-dlp: `which yt-dlp` and `yt-dlp --version` ≥ 2026.03.17 |
 | Shift+Y does nothing | Reload the YouTube tab after installing the extension |
 

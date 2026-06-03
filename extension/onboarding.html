@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>reeLm — Welcome</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0f0f0f;
+    color: #e0e0e0;
+    font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 48px 20px;
+  }
+  .card {
+    max-width: 520px;
+    width: 100%;
+  }
+  .logo {
+    font-size: 36px;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  h1 {
+    font-size: 26px;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+  .tagline {
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 28px;
+  }
+  .tagline strong {
+    color: #ccc;
+    font-weight: 600;
+  }
+  .step {
+    background: #181818;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+    transition: border-color .2s;
+  }
+  .step.done {
+    border-color: #1a6b1a;
+  }
+  .step.active {
+    border-color: #4a9eff;
+  }
+  .step-num {
+    display: inline-block;
+    background: #2a2a2a;
+    color: #aaa;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    text-align: center;
+    line-height: 24px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-right: 10px;
+    vertical-align: middle;
+  }
+  .step.done .step-num {
+    background: #1a6b1a;
+    color: #8f8;
+  }
+  .step-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .step-header h2 {
+    font-size: 15px;
+    color: #ddd;
+    font-weight: 600;
+  }
+  .step.done .step-header h2 {
+    color: #8f8;
+  }
+  .step p {
+    font-size: 13px;
+    color: #999;
+    margin-bottom: 12px;
+    padding-left: 34px;
+  }
+  .cmd-block {
+    background: #0a0a0a;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 34px;
+  }
+  .cmd-block code {
+    flex: 1;
+    color: #4a9eff;
+    font: 13px/1.5 "SF Mono", "Fira Code", monospace;
+    white-space: nowrap;
+    overflow-x: auto;
+  }
+  .cmd-block button {
+    flex-shrink: 0;
+    background: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #ccc;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 4px 10px;
+    transition: all .15s;
+  }
+  .cmd-block button:hover {
+    background: #3a3a3a;
+    border-color: #4a9eff;
+    color: #fff;
+  }
+  .cmd-block button.copied {
+    background: #1a6b1a;
+    border-color: #2a8f2a;
+    color: #8f8;
+  }
+  #status-box {
+    margin: 0;
+    padding-left: 34px;
+  }
+  #status {
+    display: inline-block;
+    background: #2a1a0a;
+    border: 1px solid #8a5a1a;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    color: #da8;
+  }
+  #status.ok {
+    background: #0a2a0a;
+    border-color: #2a8f2a;
+    color: #8f8;
+  }
+  #status.loading {
+    background: #0a1a2a;
+    border-color: #2a5a8f;
+    color: #8af;
+  }
+  #connect-link {
+    margin-top: 6px;
+    display: block;
+    font-size: 12px;
+    color: #666;
+  }
+  #connect-link a {
+    color: #4a9eff;
+    text-decoration: none;
+  }
+  #connect-link a:hover {
+    text-decoration: underline;
+  }
+  .got-it {
+    display: block;
+    background: #c00;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 12px 24px;
+    margin-top: 10px;
+    text-align: center;
+    transition: background .15s;
+  }
+  .got-it:hover {
+    background: #a00;
+  }
+  .got-it.hidden {
+    display: none;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">🔍</div>
+  <h1>Welcome to reeLm</h1>
+  <div class="tagline">Press <strong>Shift+Y</strong> on any YouTube video to save its transcript for full-text search.</div>
+
+  <div class="step active" id="step1">
+    <div class="step-header">
+      <span class="step-num">1</span>
+      <h2>Install the server</h2>
+    </div>
+    <p>reeLm needs a small local server on your Mac. Open <strong>Terminal</strong> and run:</p>
+    <div class="cmd-block">
+      <code id="cmd1">brew tap Woodman11/reelm && brew install reelm</code>
+      <button id="copy1">Copy</button>
+    </div>
+  </div>
+
+  <div class="step" id="step2">
+    <div class="step-header">
+      <span class="step-num">2</span>
+      <h2>Start the server</h2>
+    </div>
+    <p>Start the server in the background so it runs whenever your Mac is on:</p>
+    <div class="cmd-block">
+      <code id="cmd2">brew services start reelm</code>
+      <button id="copy2">Copy</button>
+    </div>
+  </div>
+
+  <div class="step" id="step3">
+    <div class="step-header">
+      <span class="step-num">3</span>
+      <h2>Verify connection</h2>
+    </div>
+    <p>Once the server is running, click below to verify it's connected:</p>
+    <div id="status-box">
+      <div id="status">⏳ Waiting for server…</div>
+      <div id="connect-link">
+        <a href="#" id="check-now">Check now</a>
+        &middot;
+        <a href="https://reelm.ca" target="_blank">Help &amp; docs</a>
+      </div>
+    </div>
+  </div>
+
+  <button class="got-it hidden" id="got-it">Got it — start using reeLm →</button>
+</div>
+
+<script src="onboarding.js"></script>
+</body>
+</html>

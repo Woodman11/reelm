@@ -30,7 +30,7 @@ document.addEventListener('keydown', (e) => {
         showToast(response.data.message);
         if (response.data.new_save) uploadTranscript(videoId);
       } else {
-        showToast('Server not running — start server.py', 'error');
+        showToast('Server not running — run: brew services start reelm', 'error');
       }
     }
   );

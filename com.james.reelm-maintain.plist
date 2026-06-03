@@ -6,7 +6,7 @@
     <string>com.james.reelm-maintain</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/james/Systems-Admin/youtube-search/reelm</string>
+        <string>/Users/james/ReelmVault/youtube-search/reelm</string>
         <string>maintain</string>
     </array>
     <key>StartInterval</key>
@@ -14,8 +14,8 @@
     <key>RunAtLoad</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>/Users/james/Systems-Admin/youtube-search/maintain.log</string>
+    <string>/Users/james/ReelmVault/youtube-search/maintain.log</string>
     <key>StandardErrorPath</key>
-    <string>/Users/james/Systems-Admin/youtube-search/maintain.log</string>
+    <string>/Users/james/ReelmVault/youtube-search/maintain.log</string>
 </dict>
 </plist>
